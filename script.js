@@ -44,3 +44,43 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
 });
+/* =================================
+   ACCORDION
+================================= */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const accordionButtons =
+        document.querySelectorAll(".accordion-btn");
+
+
+    accordionButtons.forEach(function (button) {
+
+        button.addEventListener("click", function () {
+
+            const currentItem =
+                this.closest(".accordion-item");
+
+
+            const allItems =
+                document.querySelectorAll(".accordion-item");
+
+
+            allItems.forEach(function (item) {
+
+                if (item !== currentItem) {
+
+                    item.classList.remove("open");
+
+                }
+
+            });
+
+
+            currentItem.classList.toggle("open");
+
+        });
+
+    });
+
+});
