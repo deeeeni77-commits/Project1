@@ -1,24 +1,46 @@
-// Simple page animation
-
 document.addEventListener("DOMContentLoaded", () => {
-    const heroText = document.querySelector(".hero-text");
-    const heroVisual = document.querySelector(".hero-visual");
 
-    heroText.style.opacity = "0";
-    heroVisual.style.opacity = "0";
+    const heroContent = document.querySelector(".hero-content");
+    const heroGraphic = document.querySelector(".hero-graphic");
 
-    heroText.style.transform = "translateY(20px)";
-    heroVisual.style.transform = "translateY(20px)";
+    heroContent.style.opacity = "0";
+    heroContent.style.transform = "translateY(25px)";
 
-    setTimeout(() => {
-        heroText.style.transition = "0.8s ease";
-        heroText.style.opacity = "1";
-        heroText.style.transform = "translateY(0)";
-    }, 150);
+    heroGraphic.style.opacity = "0";
+    heroGraphic.style.transform = "scale(.96)";
 
     setTimeout(() => {
-        heroVisual.style.transition = "0.8s ease";
-        heroVisual.style.opacity = "1";
-        heroVisual.style.transform = "translateY(0)";
-    }, 350);
+        heroContent.style.transition = "all .8s ease";
+        heroContent.style.opacity = "1";
+        heroContent.style.transform = "translateY(0)";
+    }, 100);
+
+    setTimeout(() => {
+        heroGraphic.style.transition = "all 1s ease";
+        heroGraphic.style.opacity = "1";
+        heroGraphic.style.transform = "scale(1)";
+    }, 300);
+
+
+    /* Floating cards */
+
+    const cards = document.querySelectorAll(".data-card");
+
+    cards.forEach((card, index) => {
+
+        card.animate(
+            [
+                { transform: "translateY(0)" },
+                { transform: "translateY(-8px)" },
+                { transform: "translateY(0)" }
+            ],
+            {
+                duration: 3000 + index * 500,
+                iterations: Infinity,
+                easing: "ease-in-out"
+            }
+        );
+
+    });
+
 });
