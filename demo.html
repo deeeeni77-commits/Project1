@@ -526,107 +526,144 @@
     </main>
 
 
-    <script>
+   
+<script>
+    const API_URL = "http://127.0.0.1:8000/api/alerts/";
 
-        const startBtn = document.getElementById("startBtn");
-        const progressBar = document.getElementById("progressBar");
-        const analysisText = document.getElementById("analysisText");
-        const analysisIcon = document.getElementById("analysisIcon");
-        const riskScore = document.getElementById("riskScore");
-        const riskFill = document.getElementById("riskFill");
-        const alertBox = document.getElementById("alertBox");
+    const startBtn = document.getElementById("startBtn");
+    const progressBar = document.getElementById("progressBar");
+    const analysisText = document.getElementById("analysisText");
+    const analysisIcon = document.getElementById("analysisIcon");
+    const riskScore = document.getElementById("riskScore");
+    const riskFill = document.getElementById("riskFill");
+    const alertBox = document.getElementById("alertBox");
+    const alertTitle = alertBox.querySelector(".alert-title");
+    const alertParagraph = alertBox.querySelector("p");
+    const evidence = alertBox.querySelector(".evidence");
 
-        const steps = [
-            document.getElementById("step1"),
-            document.getElementById("step2"),
-            document.getElementById("step3"),
-            document.getElementById("step4")
-        ];
+    const steps = [
+        document.getElementById("step1"),
+        document.getElementById("step2"),
+        document.getElementById("step3"),
+        document.getElementById("step4")
+    ];
 
-        function sleep(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        }
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
 
-        async function startAnalysis() {
+    async function startAnalysis() {
+        startBtn.disabled = true;
+        startBtn.textContent = "در حال تحلیل...";
+        alertBox.classList.remove("show");
 
-            startBtn.disabled = true;
-            startBtn.textContent = "در حال تحلیل...";
+        progressBar.style.width = "0%";
+        riskFill.style.width = "0%";
+        riskScore.textContent = "0%";
+        analysisIcon.textContent = "◉";
+
+        steps.forEach(step => step.textContent = "○");
+
+        try {
+            const stages = [
+                "در حال آماده‌سازی داده‌ها...",
+                "در حال ارسال داده‌ها به بک‌اند...",
+                "بک‌اند در حال تحلیل رویداد...",
+                "در انتظار نتیجه تحلیل..."
+            ];
+
+            for (let i = 0; i < stages.length; i++) {
+                analysisText.textContent = stages[i];
+                progressBar.style.width = ((i + 1) * 25) + "%";
+                steps[i].textContent = "✓";
+                await sleep(350);
+            }
+
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    source_ip: "192.168.1.24",
+                    destination_ip: "185.44.72.19",
+                    threat_type: "Network Scan",
+                    description:
+                        "Unusual network activity, suspicious network scan, high number of requests (1284), and possible unauthorized access."
+                })
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.error || "خطا در تحلیل رویداد");
+            }
+
+            const score = Math.max(
+                0,
+                Math.min(100, Number(result.risk_score) || 0)
+            );
+
+            const severityNames = {
+                low: "کم",
+                medium: "متوسط",
+                high: "زیاد",
+                critical: "بحرانی"
+            };
+
+            const severity = severityNames[result.severity] || result.severity;
+
+            riskScore.textContent = score + "%";
+            riskFill.style.width = score + "%";
+            progressBar.style.width = "100%";
+            analysisIcon.textContent = score >= 40 ? "!" : "✓";
+
+            analysisText.textContent =
+                "تحلیل بک‌اند تکمیل شد — سطح تهدید: " + severity;
+
+            alertTitle.textContent =
+                score >= 40
+                    ? "⚠ نتیجه تحلیل: رویداد نیازمند بررسی"
+                    : "✓ نتیجه تحلیل: سطح ریسک پایین‌تر است";
+
+            alertParagraph.textContent =
+                (result.analysis || "تحلیل اضافی ارائه نشده است.") +
+                " توصیه: " +
+                (result.recommendation || "رویداد را بررسی کنید.");
+
+            evidence.replaceChildren();
+
+            [
+                "سطح تهدید: " + severity,
+                "امتیاز ریسک: " + score + "%",
+                "شماره هشدار: " + result.id,
+                "وضعیت: " + (result.status || "new")
+            ].forEach(text => {
+                const tag = document.createElement("span");
+                tag.textContent = text;
+                evidence.appendChild(tag);
+            });
+
+            alertBox.classList.add("show");
+
+        } catch (error) {
+            analysisIcon.textContent = "!";
+            analysisText.textContent =
+                "اتصال یا تحلیل ناموفق بود: " + error.message;
+
+            progressBar.style.width = "0%";
 
             alertBox.classList.remove("show");
 
-            progressBar.style.width = "0%";
-            riskFill.style.width = "0%";
-            riskScore.textContent = "0%";
-
-            steps.forEach(step => {
-                step.textContent = "○";
-            });
-
-            const process = [
-                {
-                    text: "در حال جمع‌آوری داده‌ها...",
-                    progress: 25
-                },
-                {
-                    text: "در حال پیش‌پردازش داده‌ها...",
-                    progress: 50
-                },
-                {
-                    text: "هوش مصنوعی در حال تحلیل الگوها...",
-                    progress: 75
-                },
-                {
-                    text: "در حال بررسی سطح تهدید...",
-                    progress: 100
-                }
-            ];
-
-            for (let i = 0; i < process.length; i++) {
-
-                analysisText.textContent = process[i].text;
-                progressBar.style.width = process[i].progress + "%";
-
-                steps[i].textContent = "✓";
-
-                analysisIcon.style.transform = "scale(1.08)";
-
-                await sleep(1000);
-
-                analysisIcon.style.transform = "scale(1)";
-            }
-
-            analysisText.textContent = "تهدید احتمالی شناسایی شد";
-
-            let score = 0;
-
-            const scoreInterval = setInterval(() => {
-
-                score += 1;
-
-                riskScore.textContent = score + "%";
-                riskFill.style.width = score + "%";
-
-                if (score >= 87) {
-
-                    clearInterval(scoreInterval);
-
-                    setTimeout(() => {
-
-                        analysisIcon.textContent = "!";
-                        alertBox.classList.add("show");
-
-                        startBtn.disabled = false;
-                        startBtn.textContent = "اجرای دوباره تحلیل";
-
-                    }, 500);
-                }
-
-            }, 18);
+        } finally {
+            startBtn.disabled = false;
+            startBtn.textContent = "اجرای دوباره تحلیل";
         }
+    }
 
-        startBtn.addEventListener("click", startAnalysis);
+    startBtn.addEventListener("click", startAnalysis);
+</script>
 
-    </script>
 
 </body>
 </html>
